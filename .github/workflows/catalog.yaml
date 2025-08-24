@@ -34,6 +34,10 @@ jobs:
           go build -o build/scheduler-data ./...
 
       - name: Run
+        env:
+          S3_ACCOUNT_ID: ${{ secrets.S3_ACCOUNT_ID }}
+          S3_SECRET: ${{ secrets.S3_SECRET }}
+          S3_KEY_ID: ${{ secrets.S3_KEY_ID }}
         run: |
           ./build/scheduler-data
 
