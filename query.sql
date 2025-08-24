@@ -1,0 +1,116 @@
+create table course as
+with all_course as (
+	select distinct
+	    "subj" as subject,
+	    "#" as number,
+	    "title" as title
+	from
+	    semester_data
+)
+select
+    gen_random_uuid () as id,
+    subject,
+    number,
+    title
+from
+    all_course;
+
+create table section as
+with
+    all_section as (
+        select distinct
+            "subj" as subject,
+            "#" as number,
+            "title" as title,
+            "Comp Numb" as crn,
+            "Sec" as sec,
+        from
+            semester_data d
+    )
+select
+    gen_random_uuid () as id,
+    c.id as course_id,
+    crn,
+    sec
+from
+    all_section d
+    left join course c on d.subject = c.subject
+    and d.number = c.number
+    and d.title = c.title;
+
+create table section_block as
+with
+    semester_by_day as (
+        select distinct
+            "comp numb" as crn,
+            "sec" as sec,
+            "bldg" as building,
+            "room" as room,
+            "instructor" as instructor,
+            coalesce(try_cast ("Start Time" as time), '00:00:00') as start_time,
+            coalesce(try_cast ("End Time" as time), '00:00:00') as end_time,
+            unnest (string_split (days, '')) as day
+        from
+            semester_data
+    )
+select
+    s.id as section_id,
+    sbd.*
+from
+    semester_by_day sbd
+    join section s on sbd.crn = s.crn
+    and sbd.sec = s.sec
+where
+    day != ' ';
+
+create table catalog as (
+    select
+        json_object(
+            'id', c.id,
+            'subject', c.subject,
+            'number', c.number,
+            'title', c.title,
+            'sections', coalesce(
+                json_group_array(
+                    json_object(
+                        'id', s.section_id,
+                        'crn', s.crn,
+                        'sec', s.sec,
+                        'blocks', coalesce(s.blocks, [])
+                    )
+                ),
+                []
+            )
+        ) as 'course'
+    from
+        course c left join (
+            select
+                s.id as section_id,
+                s.crn,
+                s.sec,
+                s.course_id,
+                coalesce(
+                    json_group_array(
+                        json_object(
+                            'crn', b.crn,
+                            'sec', b.sec,
+                            'building', b.building,
+                            'room', b.room,
+                            'instructor', b.instructor,
+                            'start_time', b.start_time,
+                            'end_time', b.end_time,
+                            'day', b."day"
+                        )
+                    ),
+                    []
+                ) as blocks
+            from
+                section s left join section_block b on s.id = b.section_id
+            group by
+                s.id, s.crn, s.sec, s.course_id
+        ) s on c.id = s.course_id
+    group by
+        c.id, c.subject, c.number, c.title
+    order by
+        c.id, c.subject, c.number
+);
