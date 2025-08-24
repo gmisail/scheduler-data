@@ -1,4 +1,4 @@
-name: Proces catalog
+name: Process catalog
 
 on:
   schedule:
@@ -36,3 +36,8 @@ jobs:
       - name: Run
         run: |
           ./build/scheduler-data
+
+      - name: Commit & push changes
+        uses: Andro999b/push@v1.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
