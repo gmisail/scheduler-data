@@ -49,8 +49,8 @@ func main() {
 		log.Fatal(fmt.Errorf("could not pull data from semester data: %w", err))
 	}
 
-	currentTime := time.Now().Format("2006-01-02 03:04:05")
-	_, err = db.Exec(fmt.Sprintf("copy catalog to 'r2://scheduler-catalog/uvm_catalog_%s.json' (array)", currentTime))
+	currentTime := time.Now().Format("2006-01-02")
+	_, err = db.Exec(fmt.Sprintf("copy catalog to 'r2://scheduler-catalog/uvm/catalog_%s.json' (array)", currentTime))
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not write to file: %w", err))
 	}
