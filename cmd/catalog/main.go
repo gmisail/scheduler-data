@@ -58,12 +58,7 @@ func main() {
 	}
 
 	currentTime := time.Now().Format("2006-01-02")
-	writeToFile := fmt.Sprintf("catalog_%s.json", currentTime)
-
-	// If Cloudflare R2 credentials are not provided, write to the file system.
-	if keyId != "" && secret != "" && accountId == "" {
-		writeToFile = "r2://scheduler-catalog/uvm/" + writeToFile
-	}
+	writeToFile := fmt.Sprintf("r2://scheduler-catalog/uvm/catalog_%s.json", currentTime)
 
 	_, err = db.Exec(fmt.Sprintf("copy catalog to '%s' (array)", writeToFile))
 	if err != nil {
