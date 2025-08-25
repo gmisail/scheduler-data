@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	keyId := os.Getenv("S3_KET_ID")
+	keyId := os.Getenv("S3_KEY_ID")
 	secret := os.Getenv("S3_SECRET")
 	accountId := os.Getenv("S3_ACCOUNT_ID")
 
