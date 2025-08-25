@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/gocolly/colly"
+	"github.com/joho/godotenv"
 
 	_ "github.com/marcboeker/go-duckdb"
 )
@@ -28,25 +31,45 @@ func normalizeSpaces(word string) string {
 	}, word)
 }
 
-func pullDepartments() {
-	db, err := sql.Open("duckdb", "")
+func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	keyId := os.Getenv("S3_KEY_ID")
+	secret := os.Getenv("S3_SECRET")
+	accountId := os.Getenv("S3_ACCOUNT_ID")
+
+	db, err := sql.Open("duckdb", ":memory:")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec(`
-		CREATE TABLE department (
-			id TEXT PRIMARY KEY NOT NULL,
-			name TEXT NOT NULL,
+	_, err = db.Exec(fmt.Sprintf(`
+		install httpfs;
+		load httpfs;
+
+		create secret (
+		    type r2,
+			key_id '%s',
+			secret '%s',
+			account_id '%s'
 		);
 
-		CREATE TABLE course_desc (
-			subject TEXT NOT NULL,
-			number TEXT NOT NULL,
-			description TEXT NOT NULL
+		create table department (
+			id text primary key not null,
+			name text not null,
 		);
-	`)
+
+		create table course_desc (
+			subject text not null,
+			number text not null,
+			description text not null
+		);
+	`, keyId, secret, accountId))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,15 +141,13 @@ func pullDepartments() {
 	}
 	slog.Info("done scraping from graduate course list")
 
-	_, err = db.Exec(`
-		copy department to 'departments.csv';
+	currentTime := time.Now().Format("2006-01")
+	departmentFile := fmt.Sprintf("r2://scheduler-catalog/uvm/%s/departments.json", currentTime)
+	_, err = db.Exec(fmt.Sprintf(`
+		copy department to '%s' (array);
 		copy course_desc to 'course_desc.csv';
-	`)
+	`, departmentFile))
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not write to file: %w", err))
 	}
-}
-
-func main() {
-	pullDepartments()
 }

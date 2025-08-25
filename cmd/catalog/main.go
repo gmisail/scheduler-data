@@ -8,10 +8,17 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/marcboeker/go-duckdb"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	keyId := os.Getenv("S3_KEY_ID")
 	secret := os.Getenv("S3_SECRET")
 	accountId := os.Getenv("S3_ACCOUNT_ID")
@@ -21,9 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec(`
-		create table course_desc as select * from read_csv('course_desc.csv');
-	`)
+	_, err = db.Exec("create table course_desc as select * from read_csv('course_desc.csv');")
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not load course descriptions: %w", err))
 	}
@@ -47,7 +52,7 @@ func main() {
 		log.Fatal(fmt.Errorf("could not pull data from semester data: %w", err))
 	}
 
-	query, err := os.ReadFile("query.sql")
+	query, err := os.ReadFile("queries/catalog.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,8 +62,8 @@ func main() {
 		log.Fatal(fmt.Errorf("could not pull data from semester data: %w", err))
 	}
 
-	currentTime := time.Now().Format("2006-01-02")
-	writeToFile := fmt.Sprintf("r2://scheduler-catalog/uvm/catalog_%s.json", currentTime)
+	currentTime := time.Now().Format("2006-01")
+	writeToFile := fmt.Sprintf("r2://scheduler-catalog/uvm/%s/catalog.json", currentTime)
 
 	_, err = db.Exec(fmt.Sprintf("copy catalog to '%s' (array)", writeToFile))
 	if err != nil {

@@ -42,11 +42,6 @@ jobs:
           name: course_desc
           path: course_desc.csv
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: departments
-          path: departments.csv
-
   run_catalog:
     name: "Scrape and generate catalog"
     needs: run_scraper
@@ -75,11 +70,6 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: course_desc
-
-      - name: Download departments
-        uses: actions/download-artifact@v5
-        with:
-          name: departments
 
       - name: Run
         env:
