@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -68,6 +69,8 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not write to file: %w", err))
 	}
+
+	slog.Info("wrote catalog", "file", writeToFile)
 
 	defer db.Close()
 }
