@@ -70,6 +70,7 @@ create table catalog as (
             'subject', c.subject,
             'number', c.number,
             'title', c.title,
+            'description', coalesce(cd.description, ''),
             'sections', coalesce(
                 json_group_array(
                     json_object(
@@ -83,7 +84,8 @@ create table catalog as (
             )
         ) as 'course'
     from
-        course c left join (
+        course c left join course_desc cd on c.subject = cd.subject and c.number = cd.number
+                 left join (
             select
                 s.id as section_id,
                 s.crn,
@@ -110,7 +112,7 @@ create table catalog as (
                 s.id, s.crn, s.sec, s.course_id
         ) s on c.id = s.course_id
     group by
-        c.id, c.subject, c.number, c.title
+        c.id, c.subject, c.number, c.title, cd.description
     order by
         c.id, c.subject, c.number
 );

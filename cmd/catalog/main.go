@@ -20,6 +20,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	_, err = db.Exec(`
+		create table course_desc as select * from read_csv('course_desc.csv');
+	`)
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not load course descriptions: %w", err))
+	}
+
 	url := "https://serval.uvm.edu/~rgweb/batch/curr_enroll_fall.txt"
 	_, err = db.Exec(fmt.Sprintf(`
 		install httpfs;
@@ -50,7 +57,14 @@ func main() {
 	}
 
 	currentTime := time.Now().Format("2006-01-02")
-	_, err = db.Exec(fmt.Sprintf("copy catalog to 'r2://scheduler-catalog/uvm/catalog_%s.json' (array)", currentTime))
+	writeToFile := fmt.Sprintf("catalog_%s.json", currentTime)
+
+	// If Cloudflare R2 credentials are not provided, write to the file system.
+	if keyId != "" && secret != "" && accountId == "" {
+		writeToFile = "r2://scheduler-catalog/uvm/" + writeToFile
+	}
+
+	_, err = db.Exec(fmt.Sprintf("copy catalog to '%s' (array)", writeToFile))
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not write to file: %w", err))
 	}

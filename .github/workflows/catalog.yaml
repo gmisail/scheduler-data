@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  run_scraper:
+    name: "Scrape course descriptions & departments"
     runs-on: ubuntu-latest
 
     steps:
@@ -34,4 +35,56 @@ jobs:
           S3_SECRET: ${{ secrets.S3_SECRET }}
           S3_KEY_ID: ${{ secrets.S3_KEY_ID }}
         run: |
-          go run main.go
+          go run cmd/scraper/main.go
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: course_desc
+          path: course_desc.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: departments
+          path: departments.csv
+
+  run_catalog:
+    name: "Scrape and generate catalog"
+    needs: run_scraper
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.24"
+
+      - name: Cache modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download course description
+        uses: actions/download-artifact@v5
+        with:
+          name: course_desc
+
+      - name: Download departments
+        uses: actions/download-artifact@v5
+        with:
+          name: departments
+
+      - name: Run
+        env:
+          S3_ACCOUNT_ID: ${{ secrets.S3_ACCOUNT_ID }}
+          S3_SECRET: ${{ secrets.S3_SECRET }}
+          S3_KEY_ID: ${{ secrets.S3_KEY_ID }}
+        run: |
+          go run cmd/catalog/main.go
