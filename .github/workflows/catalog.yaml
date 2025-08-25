@@ -28,20 +28,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Build
-        run: |
-          mkdir -p build
-          go build -o build/scheduler-data ./...
-
       - name: Run
         env:
           S3_ACCOUNT_ID: ${{ secrets.S3_ACCOUNT_ID }}
           S3_SECRET: ${{ secrets.S3_SECRET }}
           S3_KEY_ID: ${{ secrets.S3_KEY_ID }}
         run: |
-          ./build/scheduler-data
-
-      - name: Commit & push changes
-        uses: Andro999b/push@v1.3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          go run main.go
