@@ -38,6 +38,8 @@ func main() {
 		return
 	}
 
+	isLocal := os.Getenv("ENV") == "local"
+
 	keyId := os.Getenv("S3_KEY_ID")
 	secret := os.Getenv("S3_SECRET")
 	accountId := os.Getenv("S3_ACCOUNT_ID")
@@ -142,7 +144,12 @@ func main() {
 	slog.Info("done scraping from graduate course list")
 
 	currentTime := time.Now().Format("2006-01")
+
 	departmentFile := fmt.Sprintf("r2://scheduler-catalog/uvm/%s/departments.json", currentTime)
+	if isLocal {
+		departmentFile = "departments.json"
+	}
+
 	_, err = db.Exec(fmt.Sprintf(`
 		copy department to '%s' (array);
 		copy course_desc to 'course_desc.csv';

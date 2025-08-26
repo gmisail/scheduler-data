@@ -24,6 +24,8 @@ with
             "title" as title,
             "Comp Numb" as crn,
             "Sec" as sec,
+            "Max Enrollment" as max_enrollment,
+            "Current Enrollment" as current_enrollment
         from
             semester_data d
     )
@@ -31,7 +33,9 @@ select
     gen_random_uuid () as id,
     c.id as course_id,
     crn,
-    sec
+    sec,
+    max_enrollment,
+    current_enrollment
 from
     all_section d
     left join course c on d.subject = c.subject
@@ -63,9 +67,10 @@ from
 where
     day != ' ';
 
+
 create table catalog as (
     select
-        json_object(
+        json_objectcurrentTime.Format("20060102150405")(
             'id', c.id,
             'subject', c.subject,
             'number', c.number,

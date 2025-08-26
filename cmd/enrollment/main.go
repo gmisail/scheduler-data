@@ -30,11 +30,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec("create table course_desc as select * from read_csv('course_desc.csv');")
-	if err != nil {
-		log.Fatal(fmt.Errorf("could not load course descriptions: %w", err))
-	}
-
 	url := "https://serval.uvm.edu/~rgweb/batch/curr_enroll_fall.txt"
 	_, err = db.Exec(fmt.Sprintf(`
 		install httpfs;
@@ -54,7 +49,7 @@ func main() {
 		log.Fatal(fmt.Errorf("could not pull data from semester data: %w", err))
 	}
 
-	query, err := os.ReadFile("queries/catalog.sql")
+	query, err := os.ReadFile("queries/enrollment.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,27 +61,18 @@ func main() {
 
 	currentTime := time.Now()
 	currentDate := currentTime.Format("2006-01")
-	catalogFile := fmt.Sprintf("r2://scheduler-catalog/uvm/%s/catalog.json", currentDate)
-	enrollmentFile := fmt.Sprintf("r2://scheduler-catalog/uvm/%s/enrollment_%s.json", currentDate, currentTime.Format("20060102150405"))
 
-	if isLocal {
-		catalogFile = "catalog.json"
-		enrollmentFile = fmt.Sprintf("enrollment_%s.json", currentTime.Format("20060102150405"))
+	fileName := fmt.Sprintf("enrollment_%s.json", currentTime.Format("20060102150405"))
+	if !isLocal {
+		fileName = fmt.Sprintf("r2://scheduler-catalog/uvm/%s/%s", currentDate, fileName)
 	}
 
-	_, err = db.Exec(fmt.Sprintf("copy catalog to '%s' (array)", catalogFile))
+	_, err = db.Exec(fmt.Sprintf("copy enrollment to '%s' (array)", fileName))
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not write to file: %w", err))
 	}
 
-	slog.Info("wrote catalog", "file", catalogFile)
-
-	_, err = db.Exec(fmt.Sprintf("copy enrollment to '%s' (array)", enrollmentFile))
-	if err != nil {
-		log.Fatal(fmt.Errorf("could not write to file: %w", err))
-	}
-
-	slog.Info("wrote enrollment", "file", enrollmentFile)
+	slog.Info("wrote enrollment", "file", fileName)
 
 	defer db.Close()
 }
