@@ -63,7 +63,7 @@ func main() {
 
 	fileName := fmt.Sprintf("enrollment_%s.json", currentTime.Format("20060102150405"))
 	if !isLocal {
-		fileName = fmt.Sprintf("r2://scheduler-catalog/uvm/%s/%s", currentDate, fileName)
+		fileName = fmt.Sprintf("r2://scheduler-catalog/uvm/%s/enrollment/%s", currentDate, fileName)
 	}
 
 	_, err = db.Exec(fmt.Sprintf("copy enrollment to '%s' (array)", fileName))
