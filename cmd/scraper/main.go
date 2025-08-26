@@ -34,8 +34,7 @@ func normalizeSpaces(word string) string {
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
-		return
+		slog.Warn("could not load .env", "err", err)
 	}
 
 	isLocal := os.Getenv("ENV") == "local"
