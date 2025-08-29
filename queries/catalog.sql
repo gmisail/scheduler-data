@@ -67,6 +67,32 @@ from
 where
     day != ' ';
 
+create table catalog_section as (
+    select
+        s.id as section_id,
+        s.crn,
+        s.sec,
+        s.course_id,
+        coalesce(
+            json_group_array(
+                json_object(
+                    'crn', b.crn,
+                    'sec', b.sec,
+                    'building', b.building,
+                    'room', b.room,
+                    'instructor', b.instructor,
+                    'start_time', b.start_time,
+                    'end_time', b.end_time,
+                    'day', b."day"
+                )
+            ),
+            []
+        ) as blocks
+    from
+        section s left join section_block b on s.id = b.section_id
+    group by
+        s.id, s.crn, s.sec, s.course_id
+);
 
 create table catalog as (
     select
@@ -90,32 +116,7 @@ create table catalog as (
         ) as 'course'
     from
         course c left join course_desc cd on c.subject = cd.subject and c.number = cd.number
-                 left join (
-            select
-                s.id as section_id,
-                s.crn,
-                s.sec,
-                s.course_id,
-                coalesce(
-                    json_group_array(
-                        json_object(
-                            'crn', b.crn,
-                            'sec', b.sec,
-                            'building', b.building,
-                            'room', b.room,
-                            'instructor', b.instructor,
-                            'start_time', b.start_time,
-                            'end_time', b.end_time,
-                            'day', b."day"
-                        )
-                    ),
-                    []
-                ) as blocks
-            from
-                section s left join section_block b on s.id = b.section_id
-            group by
-                s.id, s.crn, s.sec, s.course_id
-        ) s on c.id = s.course_id
+                 left join catalog_section s on c.id = s.course_id
     group by
         c.id, c.subject, c.number, c.title, cd.description
     order by
