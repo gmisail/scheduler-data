@@ -70,7 +70,7 @@ where
 
 create table catalog as (
     select
-        json_objectcurrentTime.Format("20060102150405")(
+        json_object(
             'id', c.id,
             'subject', c.subject,
             'number', c.number,
