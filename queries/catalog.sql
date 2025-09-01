@@ -53,7 +53,15 @@ with
             "instructor" as instructor,
             coalesce(try_cast ("Start Time" as time), '00:00:00') as start_time,
             coalesce(try_cast ("End Time" as time), '00:00:00') as end_time,
-            unnest (string_split (days, '')) as day
+            unnest (
+                string_split (
+                    coalesce(
+                        nullif(trim(days), ''),
+                        'X'
+                    ),
+                    ''
+                )
+            ) as day
         from
             semester_data
     )
@@ -63,9 +71,7 @@ select
 from
     semester_by_day sbd
     join section s on sbd.crn = s.crn
-    and sbd.sec = s.sec
-where
-    day != ' ';
+    and sbd.sec = s.sec;
 
 create table catalog_section as (
     select
@@ -93,6 +99,8 @@ create table catalog_section as (
     group by
         s.id, s.crn, s.sec, s.course_id
 );
+
+copy catalog_section to "catalog_section.json" (array);
 
 create table catalog as (
     select
