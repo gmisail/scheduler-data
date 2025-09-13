@@ -74,12 +74,10 @@ from
     and sbd.sec = s.sec;
 
 create table catalog_section as (
-    select
-        s.id as section_id,
-        s.crn,
-        s.sec,
-        s.course_id,
-        coalesce(
+    with blocks_by_day as (
+        select
+            s.id as section_id,
+            b.day,
             json_group_array(
                 json_object(
                     'crn', b.crn,
@@ -88,14 +86,32 @@ create table catalog_section as (
                     'room', b.room,
                     'instructor', b.instructor,
                     'start_time', b.start_time,
-                    'end_time', b.end_time,
-                    'day', b."day"
+                    'end_time', b.end_time
+                )
+            ) as day_blocks
+        from
+            section s
+            left join section_block b on s.id = b.section_id
+        group by
+            s.id, b.day
+    )
+    select
+        s.id as section_id,
+        s.crn,
+        s.sec,
+        s.course_id,
+        coalesce(
+            json_group_array(
+                json_object(
+                    'day', bbd.day,
+                    'blocks', bbd.day_blocks
                 )
             ),
             []
         ) as blocks
     from
-        section s left join section_block b on s.id = b.section_id
+        section s
+        left join blocks_by_day bbd on s.id = bbd.section_id
     group by
         s.id, s.crn, s.sec, s.course_id
 );
@@ -116,7 +132,7 @@ create table catalog as (
                         'id', s.section_id,
                         'crn', s.crn,
                         'sec', s.sec,
-                        'blocks', coalesce(s.blocks, [])
+                        'days', coalesce(s.blocks, [])
                     )
                 ),
                 []
