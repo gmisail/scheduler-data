@@ -1,6 +1,7 @@
 name: Process catalog
 
 on:
+  push:
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
