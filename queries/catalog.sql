@@ -56,7 +56,7 @@ with
             unnest (
                 string_split (
                     coalesce(
-                        nullif(trim(days), ''),
+                        nullif(replace(days, ' ', ''), ''),
                         'X'
                     ),
                     ''
