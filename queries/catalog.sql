@@ -116,8 +116,6 @@ create table catalog_section as (
         s.id, s.crn, s.sec, s.course_id
 );
 
-copy catalog_section to "catalog_section.json" (array);
-
 create table catalog as (
     select
         json_object(

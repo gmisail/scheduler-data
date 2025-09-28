@@ -1,0 +1,13 @@
+INSTALL HTTPFS;
+LOAD HTTPFS;
+
+CREATE TABLE department (
+	id TEXT PRIMARY KEY NOT NULL,
+	name TEXT NOT NULL,
+);
+
+CREATE TABLE course_desc (
+	subject TEXT NOT NULL,
+	number TEXT NOT NULL,
+	description TEXT NOT NULL
+);
