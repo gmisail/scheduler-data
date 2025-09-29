@@ -3,8 +3,8 @@ package banner
 import "github.com/gocolly/colly"
 
 type Term struct {
-	ID    string
-	Label string
+	ID    string `json:"id"`
+	Label string `json:"label"`
 }
 
 func ScrapeTerms() ([]Term, error) {

@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -11,14 +12,9 @@ import (
 	"github.com/gmisail/scheduler-data/pkg/util"
 )
 
-func GetLatestTerm() (*banner.Term, error) {
-	terms, err := banner.ScrapeTerms()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get latest term: %w", err)
-	}
-
+func GetLatestTerm(terms []banner.Term) (*banner.Term, error) {
 	if len(terms) == 0 {
-		return nil, fmt.Errorf("expected there to be multiple terms, found none: %w", err)
+		return nil, fmt.Errorf("expected there to be multiple terms, found none")
 	}
 
 	return &terms[0], nil
@@ -30,12 +26,6 @@ func ExtractCatalogForTerm(isLocal bool, term, url string) {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	slog.Info("load secrets")
-	err = LoadSecrets(db)
-	if err != nil {
-		log.Fatal(fmt.Errorf("failed to load secrets: %w", err))
-	}
 
 	slog.Info("setup schema")
 	util.RunQueryFromFile(db, "queries/schema.sql")
@@ -101,11 +91,7 @@ func ExtractCatalogForTerm(isLocal bool, term, url string) {
 }
 
 func ExportCatalog(db *sql.DB, isLocal bool, term string) error {
-	catalogFile := fmt.Sprintf("r2://scheduler-catalog/uvm/%s/catalog.json", term)
-
-	if isLocal {
-		catalogFile = "catalog.json"
-	}
+	catalogFile := fmt.Sprintf("upload/catalog_%s.json", term)
 
 	err := util.ExportTableAs(db, "catalog", catalogFile)
 	if err != nil {
@@ -113,6 +99,23 @@ func ExportCatalog(db *sql.DB, isLocal bool, term string) error {
 	}
 
 	slog.Info("wrote catalog", "file", catalogFile)
+
+	return nil
+}
+
+func ExportTerms(terms []banner.Term) error {
+	file, err := os.Create("upload/terms.json")
+	if err != nil {
+		return fmt.Errorf("failed to create terms file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(terms); err != nil {
+		return fmt.Errorf("failed to write terms: %w", err)
+	}
+
+	slog.Info("wrote terms to file", "file", "terms.json")
 
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/gmisail/scheduler-data/pkg/banner"
 	"github.com/gmisail/scheduler-data/pkg/catalog"
 	"github.com/joho/godotenv"
 	_ "github.com/marcboeker/go-duckdb"
@@ -20,7 +21,18 @@ func main() {
 	isLocal := os.Getenv("ENV") == "local"
 
 	slog.Info("looking for latest term")
-	term, err := catalog.GetLatestTerm()
+
+	terms, err := banner.ScrapeTerms()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	term, err := catalog.GetLatestTerm(terms)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = catalog.ExportTerms(terms)
 	if err != nil {
 		log.Fatal(err)
 	}
