@@ -30,11 +30,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Download course description
-        uses: actions/download-artifact@v5
-        with:
-          name: course_desc
-
       - name: Run
         env:
           S3_ACCOUNT_ID: ${{ secrets.S3_ACCOUNT_ID }}
