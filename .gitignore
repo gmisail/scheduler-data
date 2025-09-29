@@ -2,3 +2,5 @@
 .env
 *.csv
 *.json
+
+.gocache
