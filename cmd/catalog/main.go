@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -27,11 +26,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	term, err := catalog.GetLatestTerm(terms)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	err = catalog.ExportTerms(terms)
 	if err != nil {
 		log.Fatal(err)
@@ -46,11 +40,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if currentUrl, ok := enrollments[term.Label]; ok {
-		slog.Info("found enrollment data for latest term, extracting catalog", slog.String("term", term.ID))
-
-		catalog.ExtractCatalogForTerm(isLocal, term.ID, currentUrl)
-	} else {
-		log.Fatal(fmt.Errorf("failed to find enrollment data for the latest term: %s (%s)", term.Label, term.ID))
+	for label, url := range enrollments {
+		for _, term := range terms {
+			if term.Label == label {
+				slog.Info("extracting catalog for term", slog.String("term", term.ID))
+				catalog.ExtractCatalogForTerm(isLocal, term.ID, url)
+			}
+		}
 	}
 }
