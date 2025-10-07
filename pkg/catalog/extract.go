@@ -88,6 +88,11 @@ func ExtractCatalogForTerm(isLocal bool, term, url string) {
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to export catalog: %w", err))
 	}
+
+	err = ExportSubjects(term, subjects)
+	if err != nil {
+		log.Fatal(fmt.Errorf("failed to export subjects: %w", err))
+	}
 }
 
 func ExportCatalog(db *sql.DB, isLocal bool, term string) error {
@@ -116,6 +121,23 @@ func ExportTerms(terms []banner.Term) error {
 	}
 
 	slog.Info("wrote terms to file", "file", "terms.json")
+
+	return nil
+}
+
+func ExportSubjects(term string, subjects []banner.Subject) error {
+	file, err := os.Create(fmt.Sprintf("upload/subjects_%s.json", term))
+	if err != nil {
+		return fmt.Errorf("failed to create subjects file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(subjects); err != nil {
+		return fmt.Errorf("failed to write subjects: %w", err)
+	}
+
+	slog.Info("wrote subjects to file", "file", "subjects.json")
 
 	return nil
 }
