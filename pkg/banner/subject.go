@@ -7,8 +7,8 @@ import (
 )
 
 type Subject struct {
-	ID    string
-	Label string
+	ID    string `json:"id"`
+	Label string `json:"label"`
 }
 
 func ScrapeSubjects(semester string) ([]Subject, error) {
